@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-tc5JJpkyDeqNgXDkO7M3VBMjaM/vKHXe6bt4xlIMoUw='; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; media-src 'self'; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://dummyjson.com https://api.thecatapi.com https://cdn2.thecatapi.com https://cataas.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily Journal</title>
+  <meta name="description" content="A cute daily journal with weekly, photo, to-do and plain text pages, plus weather, quotes and cat photos.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='8' y='6' width='32' height='38' rx='6' fill='%23f3b3c6'/%3E%3Crect x='8' y='6' width='9' height='38' rx='4' fill='%23b59d9b'/%3E%3Cpath d='M28 33 L20.2 25.4 A4.6 4.6 0 0 1 26.7 18.9 L28 20.2 L29.3 18.9 A4.6 4.6 0 0 1 35.8 25.4 Z' fill='%23fff'/%3E%3C/svg%3E">
+
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem('dailyJournal.theme') || 'pink'; } catch (e) {}</script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=Lexend:wght@400;500;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+
+  <noscript>This journal needs JavaScript to run. Turn it on and reload the page.</noscript>
+
+  <div id="editor" class="editor" inert>
+
+    <header class="editor__header">
+      <h2 class="editor__title">
+        <button type="button" id="logo-btn" class="logo" aria-label="My journal: back to the home page">
+          <span class="logo__mark" aria-hidden="true">
+            <svg viewBox="0 0 48 48" focusable="false">
+              <rect x="8" y="6" width="32" height="38" rx="6" fill="#f3b3c6"/>
+              <rect x="8" y="6" width="9" height="38" rx="4" fill="#b59d9b"/>
+              <path d="M12.5 12v26" stroke="#fff" stroke-width="1.5" stroke-dasharray="2.5 3" stroke-linecap="round" opacity=".85"/>
+              <path d="M28 33 L20.2 25.4 A4.6 4.6 0 0 1 26.7 18.9 L28 20.2 L29.3 18.9 A4.6 4.6 0 0 1 35.8 25.4 Z" fill="#fff"/>
+              <circle cx="38.5" cy="9.5" r="1.7" fill="#f8d66d"/>
+            </svg>
+          </span>
+          <span class="logo__text">My journal</span>
+        </button>
+      </h2>
+
+      <div class="editor__actions">
+        <span id="account-label" class="account-label">Guest: pages aren't saved</span>
+        <button type="button" id="account-btn" class="btn">Sign in</button>
+
+        <div class="theme-picker" role="group" aria-label="Page color">
+          <button type="button" class="theme-swatch theme-swatch--pink" data-theme-choice="pink" aria-pressed="true" aria-label="Pink" title="Pink"></button>
+          <button type="button" class="theme-swatch theme-swatch--lavender" data-theme-choice="lavender" aria-pressed="false" aria-label="Lavender" title="Lavender"></button>
+          <button type="button" class="theme-swatch theme-swatch--mint" data-theme-choice="mint" aria-pressed="false" aria-label="Mint" title="Mint"></button>
+        </div>
+
+
+        <button type="button" id="progress-btn" class="btn">Mood progress</button>
+        <button type="button" id="close-btn" class="btn">Close journal</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+
+      <section id="notebook" class="notebook" aria-label="Journal pages">
+
+        <article id="left-page" class="page page--left" aria-label="Left page">
+
+          <div id="dropzone" class="dropzone">
+            <img id="photo" class="dropzone__photo" src="Image/Cover.png" alt="Watercolor illustration of a girl in a pink kimono playing a koto" draggable="false">
+
+            <p class="dropzone__overlay" aria-hidden="true">Drop your photo here</p>
+
+            <div class="dropzone__bar">
+              <span class="dropzone__text">Drag a photo here, or</span>
+              <label for="file-input" class="btn dropzone__browse">choose a file</label>
+              <button type="button" id="reset-photo-btn" class="btn" hidden>Use default</button>
+            </div>
+            <input type="file" id="file-input" class="visually-hidden" accept="image/*">
+
+            <p id="drop-status" class="status status--photo" role="status" aria-live="polite"></p>
+          </div>
+
+          <label for="journal-text" class="visually-hidden">Journal text</label>
+          <textarea id="journal-text" class="journal-text" placeholder="Text for journal"></textarea>
+
+          <dl class="stamp stamp--page">
+            <div class="stamp__row">
+              <dt><label for="entry-date">Date:</label></dt>
+              <dd><input type="date" id="entry-date" name="entry-date"></dd>
+            </div>
+            <div class="stamp__row">
+              <dt>Place:</dt>
+              <dd id="entry-place">Not set</dd>
+            </div>
+            <div class="stamp__row">
+              <dt>Weather:</dt>
+              <dd id="entry-weather">Not set</dd>
+            </div>
+          </dl>
+
+          <div id="left-layout" class="layout-slot"></div>
+
+          <div id="left-items" class="items" data-side="left"></div>
+        </article>
+
+        <div class="spine" aria-hidden="true"></div>
+
+        <article id="right-page" class="page page--right" aria-label="Right page">
+
+          <div id="vinyl" class="vinyl">
+            <div class="vinyl__ring">
+              <span class="vinyl__record" aria-hidden="true">
+                <span class="vinyl__label"></span>
+                <span class="vinyl__hole"></span>
+              </span>
+            </div>
+
+            <button type="button" id="arm-btn" class="vinyl__arm" aria-pressed="false" aria-label="Needle on the record"></button>
+
+            <p class="vinyl__title">Title: <span id="song-title">Pick a song</span></p>
+            <p id="audio-status" class="status" role="status" aria-live="polite"></p>
+          </div>
+
+          <div id="right-layout" class="layout-slot"></div>
+
+          <div id="right-items" class="items" data-side="right"></div>
+        </article>
+
+        <p id="turn-hint" class="turn-hint" aria-hidden="true"></p>
+
+      </section>
+
+      <div id="flip" class="flip" hidden inert aria-hidden="true"></div>
+
+      <aside id="toolbar" class="toolbar" aria-label="Decorate your page">
+
+        <div class="toolbar__head">
+          <button type="button" id="stickers-prev" class="toolbar__arrow" aria-label="Previous stickers">&#8249;</button>
+          <h2 class="toolbar__heading">Decorate</h2>
+          <button type="button" id="stickers-next" class="toolbar__arrow" aria-label="More stickers">&#8250;</button>
+        </div>
+
+        <ul id="sticker-grid" class="sticker-grid" tabindex="0" aria-label="Stickers (scroll sideways for more)">
+          <li><button type="button" class="sticker-btn" data-sticker="Image/Cherry.png"><img src="Image/Cherry.png" alt="Sticker: cherry" width="64" height="64"></button></li>
+          <li><button type="button" class="sticker-btn" data-sticker="Image/Clovers.png"><img src="Image/Clovers.png" alt="Sticker: clovers" width="64" height="64"></button></li>
+          <li><button type="button" class="sticker-btn" data-sticker="Image/Lighting.png"><img src="Image/Lighting.png" alt="Sticker: lighting" width="64" height="64"></button></li>
+          <li><button type="button" class="sticker-btn" data-sticker="Image/Raccon.png"><img src="Image/Raccon.png" alt="Sticker: raccoon" width="64" height="64"></button></li>
+          <li><button type="button" class="sticker-btn" data-sticker="Image/Tomato.png"><img src="Image/Tomato.png" alt="Sticker: tomato" width="64" height="64"></button></li>
+          <li><button type="button" class="sticker-btn" data-sticker="Image/button.png"><img src="Image/button.png" alt="Sticker: button" width="64" height="64"></button></li>
+          <li><button type="button" class="sticker-btn" data-sticker="Image/chi.png"><img src="Image/chi.png" alt="Sticker: chi" width="64" height="64"></button></li>
+          <li><button type="button" class="sticker-btn" data-sticker="Image/cool.png"><img src="Image/cool.png" alt="Sticker: cool" width="64" height="64"></button></li>
+          <li><button type="button" class="sticker-btn" data-sticker="Image/nail.png"><img src="Image/nail.png" alt="Sticker: nail" width="64" height="64"></button></li>
+          <li><button type="button" class="sticker-btn" data-sticker="Image/wow.png"><img src="Image/wow.png" alt="Sticker: wow" width="64" height="64"></button></li>
+        </ul>
+
+        <div class="tile moods" role="radiogroup" aria-labelledby="moods-title">
+          <p id="moods-title" class="tile__title">How are you feeling?</p>
+          <div class="moods__options">
+            <input type="radio" name="mood" id="mood-excited" value="excited" class="visually-hidden">
+            <label for="mood-excited" title="Excited"><img src="Image/Mood1.png" alt="" width="40" height="40"><span class="visually-hidden">Excited</span></label>
+
+            <input type="radio" name="mood" id="mood-happy" value="happy" class="visually-hidden">
+            <label for="mood-happy" title="Happy"><img src="Image/Mood2.png" alt="" width="40" height="40"><span class="visually-hidden">Happy</span></label>
+
+            <input type="radio" name="mood" id="mood-calm" value="calm" class="visually-hidden">
+            <label for="mood-calm" title="Calm"><img src="Image/Mood3.png" alt="" width="40" height="40"><span class="visually-hidden">Calm</span></label>
+
+            <input type="radio" name="mood" id="mood-tired" value="tired" class="visually-hidden">
+            <label for="mood-tired" title="Tired"><img src="Image/Mood4.png" alt="" width="40" height="40"><span class="visually-hidden">Tired</span></label>
+
+            <input type="radio" name="mood" id="mood-sad" value="sad" class="visually-hidden">
+            <label for="mood-sad" title="Sad"><img src="Image/Mood5.jpg" alt="" width="40" height="40"><span class="visually-hidden">Sad</span></label>
+          </div>
+        </div>
+
+        <section class="tile songs" aria-labelledby="songs-title">
+          <h3 id="songs-title" class="tile__title">Songs</h3>
+          <ul id="song-list" class="song-list"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="pager">
+      <button type="button" id="prev-btn" class="btn">Previous</button>
+      <button type="button" id="new-page-btn" class="btn btn--collapsible">New page</button>
+      <p class="pager__count" aria-live="polite">Page <span id="page-number">1</span> of <span id="page-total">1</span></p>
+      <button type="button" id="next-btn" class="btn">Next</button>
+      <button type="button" id="layout-btn" class="btn">Page style</button>
+    </footer>
+
+    <input type="file" id="canvas-file-input" class="visually-hidden" accept="image/*" multiple>
+
+    <p id="app-status" class="status status--app" role="status" aria-live="polite"></p>
+
+  </div>
+
+  <section id="cover" class="cover" aria-labelledby="cover-title">
+    <div class="cover__front">
+
+      <div class="cover__face">
+
+        <div class="cover__intro">
+          <h1 id="cover-title" class="cover__title">Welcome to your daily journal!</h1>
+
+          <dl class="stamp stamp--cover">
+            <div class="stamp__row">
+              <dt>Date:</dt>
+              <dd><time id="cover-date" datetime="">Loading…</time></dd>
+            </div>
+            <div class="stamp__row">
+              <dt>Place:</dt>
+              <dd id="cover-place">Not set</dd>
+            </div>
+            <div class="stamp__row">
+              <dt>Weather:</dt>
+              <dd id="cover-weather">Not set</dd>
+            </div>
+          </dl>
+
+          <div class="locate">
+            <button type="button" id="locate-btn" class="btn btn--primary">Use my location</button>
+
+            <form id="city-form" class="locate__form" hidden>
+              <label for="city-input">Or type your city</label>
+              <div class="locate__form-row">
+                <input type="text" id="city-input" name="city" autocomplete="address-level2" placeholder="e.g. St. Louis" required>
+                <button type="submit" class="btn">Look up</button>
+              </div>
+            </form>
+
+            <p id="cover-status" class="status" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="cover__account">
+            <p id="cover-account-label" class="cover__account-label">Not signed in: pages won't be saved</p>
+            <button type="button" id="cover-account-btn" class="btn">Sign in or sign up</button>
+          </div>
+        </div>
+
+        <div class="cover__book">
+          <div class="cover__spine" aria-hidden="true"></div>
+          <button type="button" class="cover__tab cover__tab--one" data-open-journal aria-label="Open journal"></button>
+          <button type="button" class="cover__tab cover__tab--two" data-open-journal aria-label="Open journal"></button>
+          <button type="button" class="cover__sheet" data-open-journal aria-label="Open journal">
+            <span class="cover__sheet-front" aria-hidden="true"></span>
+            <span class="cover__sheet-back" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="progress-dialog" class="progress" aria-labelledby="progress-title">
+    <div class="progress__body">
+      <div class="progress__head">
+        <h2 id="progress-title" class="progress__title">Your mood progress</h2>
+        <button type="button" id="progress-close" class="btn">Close</button>
+      </div>
+
+      <p id="progress-summary" class="progress__summary"></p>
+      <div id="progress-chart" class="progress__chart"></div>
+      <ul id="progress-legend" class="progress__legend"></ul>
+      <p id="progress-empty" class="progress__empty" hidden>
+        Pick a mood on a few pages and your progress will show up here.
+      </p>
+    </div>
+  </dialog>
+
+  <dialog id="layout-dialog" class="picker" aria-labelledby="layout-title">
+    <div class="picker__body">
+      <h2 id="layout-title" class="picker__title">Pick a page style</h2>
+      <p class="picker__hint">What kind of page would you like to write on?</p>
+
+      <div class="picker__options">
+        <button type="button" class="layout-card" data-layout-choice="text">
+          <span class="layout-card__preview layout-card__preview--text" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="layout-card__name">Just text</span>
+          <span class="layout-card__note">Simple lined pages to write on</span>
+        </button>
+
+        <button type="button" class="layout-card" data-layout-choice="weekly">
+          <span class="layout-card__preview layout-card__preview--weekly" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="layout-card__name">Weekly calendar</span>
+          <span class="layout-card__note">Mon to Fri, with the date, time and weather</span>
+        </button>
+
+        <button type="button" class="layout-card" data-layout-choice="photo">
+          <span class="layout-card__preview layout-card__preview--photo" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="layout-card__name">Photo page</span>
+          <span class="layout-card__note">A blank canvas for photos, text and stickers</span>
+        </button>
+
+        <button type="button" class="layout-card" data-layout-choice="todo">
+          <span class="layout-card__preview layout-card__preview--todo" aria-hidden="true"><i></i><i></i><i></i><b></b></span>
+          <span class="layout-card__name">To-do list</span>
+          <span class="layout-card__note">Tick things off and watch the bar fill</span>
+        </button>
+
+        <button type="button" class="layout-card" data-layout-choice="classic" hidden>
+          <span class="layout-card__preview layout-card__preview--classic" aria-hidden="true"><i></i><i></i></span>
+          <span class="layout-card__name">Original page</span>
+          <span class="layout-card__note">Photo, text and the date stamp</span>
+        </button>
+      </div>
+
+      <button type="button" id="layout-cancel" class="btn" hidden>Keep this style</button>
+    </div>
+  </dialog>
+
+  <dialog id="credit-dialog" class="progress credit" aria-labelledby="credit-title">
+    <div class="progress__body">
+      <div class="progress__head">
+        <h2 id="credit-title" class="progress__title">Thank you for decorating! ✿</h2>
+        <button type="button" id="credit-close" class="btn">Close</button>
+      </div>
+      <p class="credit__text">
+        All these cute decor stickers came from Zai! If you like their art, please support them by following their Instagram.
+      </p>
+      <a class="btn btn--primary credit__link" href="https://www.instagram.com/zezum.e/" target="_blank" rel="noopener noreferrer"><span class="credit__heart" aria-hidden="true">&#10048;</span> Follow @zezum.e on Instagram <span class="credit__heart" aria-hidden="true">&#10048;</span></a>
+    </div>
+  </dialog>
+
+  <dialog id="auth-dialog" class="auth" aria-labelledby="auth-title">
+    <form id="auth-form" class="auth__body" novalidate>
+      <div class="auth__head">
+        <h2 id="auth-title" class="auth__title">Welcome back!</h2>
+        <button type="button" id="auth-close" class="btn auth__x" aria-label="Close">&#10005;</button>
+      </div>
+
+      <div class="auth__tabs" role="group" aria-label="Sign in or sign up">
+        <button type="button" data-auth-mode="signin" aria-pressed="true">Sign in</button>
+        <button type="button" data-auth-mode="signup" aria-pressed="false">Sign up</button>
+      </div>
+
+      <p id="auth-lead" class="auth__lead">Sign in to see and save your pages.</p>
+
+      <div class="field" id="auth-name-field" hidden>
+        <label for="auth-name">Name</label>
+        <input type="text" id="auth-name" name="name" autocomplete="name" autocapitalize="words" spellcheck="false" minlength="2" maxlength="40" placeholder="What should we call you?" aria-describedby="auth-name-hint">
+        <p id="auth-name-hint" class="field__hint">Letters only, 2 to 40 characters.</p>
+      </div>
+
+      <div class="field">
+        <label for="auth-email">Email</label>
+        <input type="email" id="auth-email" name="email" autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email" maxlength="254" required placeholder="you@example.com">
+      </div>
+
+      <div class="field">
+        <label for="auth-password">Password</label>
+        <input type="password" id="auth-password" name="password" autocomplete="current-password" required minlength="8" maxlength="128" placeholder="Your password" aria-describedby="auth-password-hint">
+        <p id="auth-password-hint" class="field__hint" hidden>At least 8 characters, with a letter and a number.</p>
+      </div>
+
+      <label class="auth__show"><input type="checkbox" id="auth-show"> Show password</label>
+
+      <p id="auth-status" class="status" role="alert"></p>
+
+      <button type="submit" id="auth-submit" class="btn btn--primary auth__submit">Sign in</button>
+      <button type="button" id="auth-guest" class="auth__guest">Not now, continue without saving</button>
+
+      <p class="auth__note">Your account lives in this browser only, so it won't follow you to another device.</p>
+    </form>
+  </dialog>
+
+</body>
+</html>
